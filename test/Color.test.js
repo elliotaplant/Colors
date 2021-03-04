@@ -81,4 +81,27 @@ contract('Color', (accounts) => {
     })
   })
 
+  describe('blending', async () => {
+    it('blends colors', async () => {
+      const color1 = '#001122';
+      const color2 = '#DD99BB';
+      const expected = '#6F556F';
+      // Mint 3 more tokens
+      await contract.mint(color1);
+      await contract.mint(color2);
+
+      await contract.blend(color1, color2);
+
+      const totalSupply = await contract.totalSupply()
+
+      let result = [];
+
+      for (var i = totalSupply - colors.length; i < totalSupply; i++) {
+        const color = await contract.colors(i);
+        result.push(color)
+      }
+
+      expect(result).to.deep.equal([color1, color2, expected]);
+    })
+  })
 })
