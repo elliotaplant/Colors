@@ -35,7 +35,8 @@ contract('Color', (accounts) => {
   describe('minting', async () => {
 
     it('creates a new token', async () => {
-      const result = await contract.mint('#EC058E')
+      const expected = '#EEBBDD'
+      const result = await contract.mint(expected)
       const totalSupply = await contract.totalSupply()
       // SUCCESS
       assert.equal(totalSupply, 1)
@@ -45,19 +46,23 @@ contract('Color', (accounts) => {
       assert.equal(event.to, accounts[0], 'to is correct')
 
       // FAILURE: cannot mint same color twice
-      await contract.mint('#EC058E').should.be.rejected;
+      await contract.mint(expected).should.be.rejected;
     })
 
     it('only mints valid hex colors', async () => {
-      await contract.mint('not a color').should.be.rejected;
-      await contract.mint('#CLOSEB').should.be.rejected;
-      await contract.mint('#-11111').should.be.rejected;
+      await contract.mint('not a color').should.be.rejected; // must be the right length
+      await contract.mint('#AABBCCDD').should.be.rejected; // must be the right length
+      await contract.mint('#-11111').should.be.rejected; // no negative numbers
+      await contract.mint('#CLOSEB').should.be.rejected; // only valid letters allowed
+      await contract.mint('#ABCDEG').should.be.rejected; // only valid letters allowed
+      await contract.mint('#123abc').should.be.rejected; // uppercase only
+      await contract.mint('#112234').should.be.rejected; // new colors must have AABBCC format
     })
   })
 
   describe('indexing', async () => {
     it('lists colors', async () => {
-      const colors = ['#5386E4', '#FFFFFF', '#000000'];
+      const colors = ['#AABBCC', '#FFFFFF', '#000000'];
       // Mint 3 more tokens
       for (const color of colors) {
         await contract.mint(color);
