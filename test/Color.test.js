@@ -61,7 +61,7 @@ contract('Color', (accounts) => {
 
   describe('indexing', async () => {
     it('lists colors', async () => {
-      const colors = ['#AABBCC', '#FFFFFF', '#000000'];
+      const colors = ['#AABBCC', '#FFFFFF', '#DDEEFF'];
       const intColors = colors.map(hexToInt)
       // Mint 3 more tokens
       for (const color of intColors) {
@@ -84,26 +84,21 @@ contract('Color', (accounts) => {
 
   describe('blending', async () => {
     it('blends colors', async () => {
-      // const color1 = '#001122';
-      // const color2 = '#DD99BB';
-      // const expected = '#6F556F';
-      // // Mint 3 more tokens
-      // await contract.mint(color1);
-      // await contract.mint(color2);
-      //
-      // await contract.blend(color1, color2);
-      //
-      // const totalSupply = await contract.totalSupply()
-      //
-      // let result = [];
-      //
-      // for (var i = totalSupply - colors.length; i < totalSupply; i++) {
-      //   const color = await contract.colors(i);
-      //   result.push(color)
-      // }
-      //
-      // expect(result).to.deep.equal([color1, color2, expected]);
-    })
+      const color1 = hexToInt('#000000');
+      const color2 = hexToInt('#000011');
+      const expectedBlendResult = hexToInt('#000008');
+
+      await Promise.all([color1, color2].map(color => contract.mint(color)));
+
+      await contract.blend(color1, color2);
+
+      const totalCount = await contract.totalSupply();
+      const lastColor = await contract.tokenByIndex(totalCount - 1)
+      const owner = await contract.ownerOf(expectedBlendResult)
+
+      expect(lastColor.toNumber()).to.equal(expectedBlendResult);
+      expect(owner).to.equal(accounts[0]);
+    });
   })
 })
 
