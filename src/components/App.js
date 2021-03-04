@@ -84,10 +84,13 @@ class App extends Component {
     this.state.contract.methods
       .mint(colorInt)
       .send({ from: this.state.account })
-      .once('receipt', () => {
+      .on('receipt', () => {
         this.setState({
           yourColors: [...this.state.yourColors, colorHex]
         });
+      })
+      .on('error', (error) => {
+        alert('Error minting your color')
       });
   };
 
@@ -127,7 +130,6 @@ class App extends Component {
             <main role='main' className='col-lg-12 d-flex text-center'>
               <div className='content mr-auto ml-auto'>
                 <h1>Issue Token</h1>
-                <i>Contract: {this.state.contractAddress}</i>
                 <form
                   onSubmit={event => {
                     event.preventDefault();
@@ -149,6 +151,12 @@ class App extends Component {
                     value='MINT'
                   />
                 </form>
+                <h3>Rules</h3>
+                <ul className='text-left'>
+                  <li>Only colors of the format #RRGGBB can be minted. To create other colors, you must blend existing colors.</li>
+                  <li>You can't mint a color that someone has already minted or created from blending.</li>
+                </ul>
+                <i>Contract: {this.state.contractAddress}</i>
               </div>
             </main>
           </div>
