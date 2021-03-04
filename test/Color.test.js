@@ -47,26 +47,32 @@ contract('Color', (accounts) => {
       // FAILURE: cannot mint same color twice
       await contract.mint('#EC058E').should.be.rejected;
     })
+
+    it('only mints valid hex colors', async () => {
+      await contract.mint('not a color').should.be.rejected;
+      await contract.mint('#CLOSEB').should.be.rejected;
+      await contract.mint('#-11111').should.be.rejected;
+    })
   })
 
   describe('indexing', async () => {
     it('lists colors', async () => {
+      const colors = ['#5386E4', '#FFFFFF', '#000000'];
       // Mint 3 more tokens
-      await contract.mint('#5386E4')
-      await contract.mint('#FFFFFF')
-      await contract.mint('#000000')
+      for (const color of colors) {
+        await contract.mint(color);
+      }
+
       const totalSupply = await contract.totalSupply()
 
-      let color
-      let result = []
+      let result = [];
 
-      for (var i = 1; i <= totalSupply; i++) {
-        color = await contract.colors(i - 1)
+      for (var i = totalSupply - colors.length; i < totalSupply; i++) {
+        const color = await contract.colors(i);
         result.push(color)
       }
 
-      let expected = ['#EC058E', '#5386E4', '#FFFFFF', '#000000']
-      assert.equal(result.join(','), expected.join(','))
+      expect(result).to.deep.equal(colors);
     })
   })
 
