@@ -30,7 +30,13 @@
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": "react-app",
+    "globals": {
+      "artifacts": "readonly",
+      "contract": "readonly",
+      "before": "readonly",
+      "assert": "readonly"
+    }
   },
   "browserslist": [
     ">0.2%",
