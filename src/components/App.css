@@ -5,4 +5,18 @@
   width: 150px;
   border-radius: 50%;
   display: inline-block;
+  color: transparent;
+  line-height: 150px;
+  cursor: pointer;
+  transition: color 0.25s;
+  border: 2px solid transparent;
+}
+
+.token:hover {
+  color: black;
+}
+
+.token.selected {
+  border-color: black;
+  color: black;
 }

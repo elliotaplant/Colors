@@ -4,11 +4,33 @@ import './App.css';
 import Color from '../abis/Color.json';
 
 function intToHex(int) {
-  return int._hex.replace('0x', '#').toUpperCase()
+  return '#' + int._hex.slice(2).padStart(6, '0').toUpperCase();
 }
 
 function hexToInt(hex) {
   return parseInt(hex.slice(1), 16);
+}
+
+function expectedBlend(color1, color2) {
+  let newColor = '#';
+  for (let i = 1; i < color1.length; i += 2) {
+    const partialAsInt1 = parseInt(color1[i] + color1[i+1], 16);
+    const partialAsInt2 = parseInt(color2[i] + color2[i+1], 16);
+    newColor += Math.floor((partialAsInt1 + partialAsInt2)/2).toString(16).toUpperCase();
+  }
+  return newColor;
+}
+
+async function sendTransaction(txn) {
+  if (window.ethereum) {
+    const txnHash = await window.ethereum.request({
+       method: 'eth_sendTransaction',
+       params: [txn]
+    })
+    return window.web3.eth.getTransactionReceipt(txnHash);
+  } else if (window.web3) {
+    return window.web3.eth.sendTransaction(txn);
+  }
 }
 
 class App extends Component {
@@ -57,7 +79,7 @@ class App extends Component {
     }
   }
 
-  mint = colorHex => {
+  mint = async (colorHex) => {
     if (colorHex.length !== 7) {
       return alert(
         'Colors must be a valid, uppercase, six digit hex value starting with a "#" ' +
@@ -77,22 +99,46 @@ class App extends Component {
     if (colorInt % 17) {
       return alert(
         'You can only mint colors with double equal pairs for each of the Red, Green, and Blue slots. ' +
-        'For example, you can mint "AABBCC", but you cannot mint "AABBCD"'
+        'For example, you can mint "#AABBCC", but you cannot mint "#AABBCD"'
       );
     }
 
-    this.state.contract.methods
-      .mint(colorInt)
-      .send({ from: this.state.account })
-      .on('receipt', () => {
-        this.setState({
-          yourColors: [...this.state.yourColors, colorHex]
-        });
-      })
-      .on('error', (error) => {
-        alert('Error minting your color')
+    this.setState({ currentlyMinting: colorHex });
+    try {
+      await sendTransaction({
+        from: this.state.account,
+        to: this.state.contractAddress,
+        data: this.state.contract.methods.mint(colorInt).encodeABI()
       });
+      this.setState({
+        yourColors: [...this.state.yourColors, colorHex]
+      });
+    } catch (e) {
+      alert('Error minting your color')
+      console.error(e);
+    }
   };
+
+  setBlend = async (color) => {
+    const newColors = [...this.state.blendColors, color];
+    if (newColors.length === 2) {
+      const expectedColor = expectedBlend(...newColors);
+      this.setState({ currentlyBlending: newColors });
+      try {
+        await sendTransaction({
+          from: this.state.account,
+          to: this.state.contractAddress,
+          data: this.state.contract.methods.blend(hexToInt(newColors[0]), hexToInt(newColors[1])).encodeABI()
+        });
+        this.setState({ yourColors: [...this.state.yourColors, expectedColor] });
+      } catch (e) {
+        alert('Error blending your colors');
+      }
+      this.setState({ currentlyBlending: null, blendColors: [] })
+    } else {
+      this.setState({ blendColors: [color] });
+    }
+  }
 
   constructor(props) {
     super(props);
@@ -101,7 +147,10 @@ class App extends Component {
       contractAddress: '',
       contract: null,
       totalOwned: 0,
-      yourColors: []
+      yourColors: [],
+      blendColors: [],
+      currentlyBlending: null,
+      currentlyMinting: null,
     };
   }
 
@@ -162,14 +211,23 @@ class App extends Component {
           </div>
           <hr />
           <h3>Your colors</h3>
+          {this.state.currentlyMinting && <p>Minting {this.state.currentlyMinting}</p>}
+          {
+            this.state.currentlyBlending &&
+              <p>
+                Blending {this.state.currentlyBlending[0]} and {this.state.currentlyBlending[1]} into {expectedBlend(this.state.currentlyBlending[0], this.state.currentlyBlending[1])}
+
+              </p>
+            }
           <div className='row text-center'>
             {this.state.yourColors.map((color, key) => {
               return (
                 <div key={key} className='col-md-3 mb-3'>
                   <div
-                    className='token'
+                    className={'token' + (this.state.blendColors.includes(color) ? ' selected' : '')}
                     style={{ backgroundColor: color }}
-                  ></div>
+                    onClick={() => this.setBlend(color)}
+                  >Blend</div>
                   <div>{color}</div>
                 </div>
               );
