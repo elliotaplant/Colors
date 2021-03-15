@@ -16,7 +16,7 @@ function expectedBlend(color1, color2) {
   for (let i = 1; i < color1.length; i += 2) {
     const partialAsInt1 = parseInt(color1[i] + color1[i+1], 16);
     const partialAsInt2 = parseInt(color2[i] + color2[i+1], 16);
-    newColor += Math.floor((partialAsInt1 + partialAsInt2)/2).toString(16).toUpperCase();
+    newColor += Math.floor((partialAsInt1 + partialAsInt2)/2).toString(16).padStart(2, '0').toUpperCase();
   }
   return newColor;
 }
